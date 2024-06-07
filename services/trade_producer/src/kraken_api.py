@@ -93,7 +93,7 @@ class KrakenWebsocketTradeAPI:
         try:
             # Receive a message from the websocket
             message = self._ws.recv()
-            print(message)
+
         except websocket.WebSocketConnectionClosedException:
             logging.warning('Websocket connection lost. Reconnecting...')
             self._ws.close() # Ensure the old socket is closed
