@@ -1,8 +1,9 @@
-from typing import List, Dict
-import websocket
 import json
 import logging
 import time
+from typing import Dict, List
+
+import websocket
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

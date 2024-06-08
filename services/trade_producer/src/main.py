@@ -1,18 +1,19 @@
 """Description: Main entry point for the trade producer service."""
 
 # Gets msgs from a websocket and sends them to redpanda topic
-from quixstreams import Application
-from typing import Dict, List
-from time import sleep
 import logging
+from time import sleep
+from typing import Dict, List
+
+from quixstreams import Application
+
 from src import config
-
-
-# Configure logging for the application to display INFO level messages 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Import the KrakenWebsocketTradeAPI class from the kraken_api module
 from src.kraken_api import KrakenWebsocketTradeAPI
+
+# Configure logging for the application to display INFO level messages 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def produce_trades(kafka_broker_address: str, kafka_topic_name: str, product_ids: List[str]) -> None:
