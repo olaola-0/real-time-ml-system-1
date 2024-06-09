@@ -4,7 +4,7 @@
 from time import sleep
 from typing import Dict, List
 
-from config import PRODUCT_IDS, config
+from config import config
 
 # Import the KrakenWebsocketTradeAPI class from the kraken_api module
 from kraken_api import KrakenWebsocketTradeAPI
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         produce_trades(
             kafka_broker_address=config.kafka_broker_address,
             kafka_topic_name=config.kafka_topic_name,
-            product_ids=PRODUCT_IDS,
+            product_ids=config.product_ids
         )
     except KeyboardInterrupt:
         logging.info('Trade producer service stopped.')
