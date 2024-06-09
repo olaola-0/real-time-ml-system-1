@@ -6,7 +6,9 @@ from typing import Dict, List
 import websocket
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 
 class KrakenWebsocketTradeAPI:
@@ -19,7 +21,7 @@ class KrakenWebsocketTradeAPI:
     """
 
     # The URL of the Kraken websocket API
-    URL =  'wss://ws.kraken.com/v2'
+    URL = 'wss://ws.kraken.com/v2'
 
     def __init__(self, product_ids: List[str]):
         self.product_ids = product_ids
@@ -42,41 +44,40 @@ class KrakenWebsocketTradeAPI:
 
         except Exception as e:
             logging.error(f'Error connecting to {self.URL}: {e}')
-            time.sleep(5) # Wait for 5 seconds before retrying
+            time.sleep(5)  # Wait for 5 seconds before retrying
             self._connect()
 
-            
     def _subscribe(self, product_ids: List[str]):
-            """Subscribe to trade updates for the specified product IDs.
-            Args:
-                product_ids (List[str]): A list of product IDs to subscribe to.
-            Raises:
-                Exception: If there is an error subscribing to trades.
-            """
-            try:
-                logging.info(f'Subscribing to {", ".join(product_ids)} trades...')
-                # Create a subscription message
-                msg = {
-                    "method": "subscribe",
-                    "params": {
-                        "channel": "trade",
-                        "symbol": product_ids,
-                        "snapshot": False,
-                    }
+        """Subscribe to trade updates for the specified product IDs.
+        Args:
+            product_ids (List[str]): A list of product IDs to subscribe to.
+        Raises:
+            Exception: If there is an error subscribing to trades.
+        """
+        try:
+            logging.info(f'Subscribing to {", ".join(product_ids)} trades...')
+            # Create a subscription message
+            msg = {
+                'method': 'subscribe',
+                'params': {
+                    'channel': 'trade',
+                    'symbol': product_ids,
+                    'snapshot': False,
+                },
             }
-                # Send the subscription message to the websocket
-                self._ws.send(json.dumps(msg))
-                logging.info(f'Subscribed to {", ".join(product_ids)} trades.')
+            # Send the subscription message to the websocket
+            self._ws.send(json.dumps(msg))
+            logging.info(f'Subscribed to {", ".join(product_ids)} trades.')
 
-                # Dumping the first two messages received from the websocket as they are not trade messages
-                _ = self._ws.recv()
-                _ = self._ws.recv()
+            # Dumping the first two messages received from the websocket as they are not trade messages
+            _ = self._ws.recv()
+            _ = self._ws.recv()
 
-            except Exception as e:
-                logging.error(f"Error subscribing to trades: {e}")
-                self._ws.close()
-                time.sleep(5) # Delay before retrying
-                self._connect()
+        except Exception as e:
+            logging.error(f'Error subscribing to trades: {e}')
+            self._ws.close()
+            time.sleep(5)  # Delay before retrying
+            self._connect()
 
     def get_trades(self) -> List[Dict]:
         """Retrieve the latest trades from the Kraken API.
@@ -97,28 +98,28 @@ class KrakenWebsocketTradeAPI:
 
         except websocket.WebSocketConnectionClosedException:
             logging.warning('Websocket connection lost. Reconnecting...')
-            self._ws.close() # Ensure the old socket is closed
+            self._ws.close()  # Ensure the old socket is closed
             self._connect()
             return []
         except Exception as e:
-            logging.error(f"Error receiving message: {e}")
-            return []  
-
-        if 'heartbeat' in message:
-            # Return an empty list if the message is a heartbeat..
+            logging.error(f'Error receiving message: {e}')
             return []
-        
+
         # Parse the message string to a dictionary
         message_dict = json.loads(message)
-        # Extract the trades from the message_dict['data'] field
-        trades = []
-        for trade in message_dict['data']:
-            trades.append({
-                'product_id': trade['symbol'],
-                'price': trade['price'],
-                'volume': trade['qty'],
-                'timestamp': trade['timestamp']
-            })
-        
-        return trades
-        
+
+        # Only process trade update messages
+        if message_dict.get('channel') == 'trade' and message_dict.get('type') == 'update':
+            trades = []
+            for trade in message_dict['data']:
+                trades.append(
+                    {
+                        'product_id': trade['symbol'],
+                        'price': trade['price'],
+                        'volume': trade['qty'],
+                        'timestamp': trade['timestamp'],
+                    }
+                )
+            return trades
+        else:
+            return []
