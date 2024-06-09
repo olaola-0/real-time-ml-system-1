@@ -1,7 +1,6 @@
 """Description: Main entry point for the trade producer service."""
 
 # Gets msgs from a websocket and sends them to redpanda topic
-import logging
 from time import sleep
 from typing import Dict, List
 
@@ -9,12 +8,8 @@ from config import PRODUCT_IDS, config
 
 # Import the KrakenWebsocketTradeAPI class from the kraken_api module
 from kraken_api import KrakenWebsocketTradeAPI
+from loguru import logger as logging
 from quixstreams import Application
-
-# Configure logging for the application to display INFO level messages
-logging.basicConfig(
-    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s'
-)
 
 
 def produce_trades(
@@ -58,7 +53,7 @@ def produce_trades(
                     producer.produce(
                         topic=topic.name, value=message.value, key=message.key
                     )
-                    logging.info(f'Message sent to Kafka topic: {kafka_topic_name}!')
+                    logging.info(f'Trade produced: {trade}')
                 sleep(1)
             except Exception as e:
                 # Log the full error message that occurs during the trade production process
@@ -67,8 +62,11 @@ def produce_trades(
 
 if __name__ == '__main__':
     # Start the trade producer service
-    produce_trades(
-        kafka_broker_address=config.kafka_broker_address,
-        kafka_topic_name=config.kafka_topic_name,
-        product_ids=PRODUCT_IDS,
-    )
+    try:
+        produce_trades(
+            kafka_broker_address=config.kafka_broker_address,
+            kafka_topic_name=config.kafka_topic_name,
+            product_ids=PRODUCT_IDS,
+        )
+    except KeyboardInterrupt:
+        logging.info('Trade producer service stopped.')
