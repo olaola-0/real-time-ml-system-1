@@ -109,7 +109,10 @@ class KrakenWebsocketTradeAPI:
         message_dict = json.loads(message)
 
         # Only process trade update messages
-        if message_dict.get('channel') == 'trade' and message_dict.get('type') == 'update':
+        if (
+            message_dict.get('channel') == 'trade'
+            and message_dict.get('type') == 'update'
+        ):
             trades = []
             for trade in message_dict['data']:
                 trades.append(
