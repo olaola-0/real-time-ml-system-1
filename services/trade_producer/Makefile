@@ -1,11 +1,17 @@
 run-dev:
 	poetry run python src/main.py
 
+run-dev-historical:
+	set LIVE_OR_HISTORICAL=historical && set LAST_N_DAYS=2 && poetry run python src/main.py
+
 build:
 	docker build -t trade_producer .
 
 run: build
-	docker run -it --network=redpanda_network trade_producer
+	docker run \
+		--network=redpanda_network \
+		--env KAFKA_BROKER_ADDRESS=redpanda-0:9092 \
+		trade_producer
 
 lint:
 	poetry run ruff check --fix
