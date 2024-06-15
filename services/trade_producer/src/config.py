@@ -8,8 +8,8 @@ load_dotenv(find_dotenv())
 
 
 class Config(BaseSettings):
-    kafka_broker_address: str
-    kafka_topic_name: str
+    kafka_broker_address: str ='localhost:19092'
+    kafka_topic_name: str = 'trade'
     product_ids: List[str] = [
         'BTC/USD',
         #'ETH/USD',
