@@ -128,5 +128,5 @@ class KrakenWebsocketTradeAPI:
             return []
 
     def is_done(self) -> bool:
-        """The websoscoket connection is always open for live data."""
+        """The websocket connection is always open for live data."""
         return False
