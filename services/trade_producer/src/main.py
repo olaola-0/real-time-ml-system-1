@@ -72,7 +72,7 @@ def produce_trades(
                     message = topic.serialize(
                         key=trade['product_id'],
                         value=trade,
-                        timestamp_ms=trade['time'] * 1000,  # Convert the timestamp to milliseconds
+                        timestamp_ms=trade['timestamp'] * 1000,  # Convert the timestamp to milliseconds
                     )
 
                     # Produce a message into the Kafka topic
