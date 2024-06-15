@@ -95,14 +95,14 @@ class KrakenRestAPI:
             {
                 'price': float(trade[0]),
                 'volume': float(trade[1]),
-                'time': int(trade[2]),
+                'timestamp': int(trade[2]),
                 'product_id': self.product_id,
             }
             for trade in data['result'][self.product_id]
         ]
 
         # Filter out trades that are newer than the to_ms timestamp.
-        trades = [trade for trade in trades if trade['time'] <= self.to_ms // 1000]
+        trades = [trade for trade in trades if trade['timestamp'] <= self.to_ms // 1000]
 
         # Check if we are done retrieving historical trade data.
         last_ts_in_ns = int(data['result']['last'])
