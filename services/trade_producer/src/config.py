@@ -1,31 +1,28 @@
-from typing import List
+from typing import List, Optional
 
-from dotenv import find_dotenv, load_dotenv
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
-
-# Load environment variables from .env file
-load_dotenv(find_dotenv())
 
 
 class Config(BaseSettings):
-    kafka_broker_address: str ='localhost:19092'
-    kafka_topic_name: str = 'trade'
-    product_ids: List[str] = [
-        'BTC/USD',
-        #'ETH/USD',
-        #'ADA/USD',
-        #'SOL/USD',
-        #'DOT/USD',
-        #'LUNA/USD',
-        #'AVAX/USD',
-        #'DOGE/USD',
-        #'SHIB/USD',
-        #'UNI/USD',
-    ]
-    # The mode of operation for the trade producer service (live or historical)
-    live_or_historical: str = 'live'
-    # The number of days of historical trade data to retrieve
-    last_n_days: int = 1
+    """A class to represent the configuration settings for the trade producer service."""
+
+    kafka_broker_address: Optional[str] = None
+    kafka_topic: str
+    product_ids: List[str]
+
+    live_or_historical: str
+
+    last_n_days: Optional[int] = 1
+    cache_dir_historical_data: Optional[str] = None
+
+    @field_validator('live_or_historical')
+    @classmethod
+    def validate_live_or_historical(cls, value):
+        assert (
+            value in {'live', 'historical'}
+        ), f'Invalid value for live_or_historical: {value}. Must be either "live" or "historical"'
+        return value
 
 
 config = Config()

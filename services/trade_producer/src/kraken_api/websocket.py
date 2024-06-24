@@ -1,9 +1,12 @@
 import json
 import logging
 import time
-from typing import Dict, List
+from datetime import datetime, timezone
+from typing import List
 
 import websocket
+
+from src.kraken_api.trade import Trade
 
 # Configure logging
 logging.basicConfig(
@@ -79,7 +82,7 @@ class KrakenWebsocketTradeAPI:
             time.sleep(5)  # Delay before retrying
             self._connect()
 
-    def get_trades(self) -> List[Dict]:
+    def get_trades(self) -> List[Trade]:
         """Retrieve the latest trades from the Kraken API.
 
         Returns:
@@ -105,6 +108,9 @@ class KrakenWebsocketTradeAPI:
             logging.error(f'Error receiving message: {e}')
             return []
 
+        if 'heartbeat' in message:
+            return []
+
         # Parse the message string to a dictionary
         message_dict = json.loads(message)
 
@@ -115,18 +121,34 @@ class KrakenWebsocketTradeAPI:
         ):
             trades = []
             for trade in message_dict['data']:
+                # Transform the timestamp from Kraken, which is in string format, to a Unix timestamp
+                timestamp_ms = self.to_ms(trade['timestamp'])
+
                 trades.append(
-                    {
-                        'product_id': trade['symbol'],
-                        'price': trade['price'],
-                        'volume': trade['qty'],
-                        'timestamp': trade['timestamp'],
-                    }
+                    Trade(
+                        product_id=trade['symbol'],
+                        price=float(trade['price']),
+                        volume=float(trade['qty']),
+                        timestamp_ms=timestamp_ms,
+                    )
                 )
-            return trades
+            return trades  
         else:
             return []
 
     def is_done(self) -> bool:
         """The websocket connection is always open for live data."""
         return False
+
+    @staticmethod
+    def to_ms(timestamp: str) -> int:
+        """
+        Transforms a timestamp expressed as a string like '2024-06-17T09:36:39.467866Z'
+        to a timestamp expressed in milliseconds since the epoch.
+        Args:
+            timestamp (str): The timestamp in Kraken format.
+        Returns:
+            int: A timestamp expressed in milliseconds since the epoch.
+        """
+        timestamp = datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
+        return int(timestamp.timestamp() * 1000)

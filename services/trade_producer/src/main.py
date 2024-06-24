@@ -1,13 +1,14 @@
 """Description: Main entry point for the trade producer service."""
 
 # Gets msgs from a websocket and sends them to redpanda topic
-from typing import Dict, List
+from typing import List
 
 from loguru import logger as logging
 from quixstreams import Application
 
 from src.config import config
 from src.kraken_api.rest import KrakenRestAPIMultipleProducts
+from src.kraken_api.trade import Trade
 from src.kraken_api.websocket import KrakenWebsocketTradeAPI
 
 
@@ -30,11 +31,6 @@ def produce_trades(
     Returns:
         None
     """
-    assert live_or_historical.strip() in {
-        'live',
-        'historical',
-    }, f'Invalid mode of operation: {live_or_historical}. Must be live or historical.'
-
     # Create an application. The application is the main entry point for interacting with the QuixStreams API
     app = Application(broker_address=kafka_broker_address)
 
@@ -49,7 +45,10 @@ def produce_trades(
     else:
         # Create an instance of the KrakenRestAPI class if the mode of operation is historical
         kraken_api = KrakenRestAPIMultipleProducts(
-            product_ids=product_ids, last_n_days=last_n_days
+            product_ids=product_ids,
+            last_n_days=last_n_days,
+            n_threads=1,  # Use a single thread to avoid rate limiting
+            cache_dir=config.cache_dir_historical_data,
         )
 
     # Create a Producer instance
@@ -63,23 +62,21 @@ def produce_trades(
 
             try:
                 # Get the trades from the Kraken API
-                trades_response: List[Dict] = kraken_api.get_trades()
-                #logging.info(f'Received {len(trades_response)} trades from Kraken API.')
+                trades_response: List[Trade] = kraken_api.get_trades()
+                # logging.info(f'Received {len(trades_response)} trades from Kraken API.')
 
                 # Iterate over the trades and send them to the Kafka topic
                 for trade in trades_response:
                     # Serialize an event using the defined Topic
                     message = topic.serialize(
-                        key=trade['product_id'],
-                        value=trade,
-                        timestamp_ms=trade['timestamp'] * 1000,  # Convert the timestamp to milliseconds
+                        key=trade.product_id, value=trade.model_dump()
                     )
 
                     # Produce a message into the Kafka topic
                     producer.produce(
                         topic=topic.name, value=message.value, key=message.key
                     )
-                    logging.info(f'Produced {trade["product_id"]}: {trade}')
+                    logging.info(f'Produced {trade.product_id}: {trade}')
                 # sleep(1)
             except Exception as e:
                 # Log the full error message that occurs during the trade production process
@@ -87,11 +84,15 @@ def produce_trades(
 
 
 if __name__ == '__main__':
+    #
+    logging.debug('Configuration:')
+    logging.debug(config.model_dump)
+
     # Start the trade producer service
     try:
         produce_trades(
             kafka_broker_address=config.kafka_broker_address,
-            kafka_topic_name=config.kafka_topic_name,
+            kafka_topic_name=config.kafka_topic,
             product_ids=config.product_ids,
             live_or_historical=config.live_or_historical,
             last_n_days=config.last_n_days,
