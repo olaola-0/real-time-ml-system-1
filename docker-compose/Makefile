@@ -6,20 +6,20 @@ stop-redpanda:
 
 # Feature pipeline commands when running with live data
 build-feature-pipeline:
-	docker compose -f feature-pipeline.yml build
+	docker compose -f feature_pipeline.yml build
 
 run-feature-pipeline: build-feature-pipeline
-	docker compose -f feature-pipeline.yml up -d
+	docker compose -f feature_pipeline.yml up -d
 
 stop-feature-pipeline:
-	docker compose -f feature-pipeline.yml down
+	docker compose -f feature_pipeline.yml down
 
 # Feature pipeline commands when backfilling historical data
 build-backfill-pipeline:
-	docker compose -f backfill-pipeline.yml build
+	docker compose -f backfill_pipeline.yml build
 
 run-backfill-pipeline: build-backfill-pipeline
-	docker compose -f backfill-pipeline.yml up -d
+	docker compose -f backfill_pipeline.yml up -d
 
 stop-backfill-pipeline:
-	docker compose -f backfill-pipeline.yml down
+	docker compose -f backfill_pipeline.yml down
