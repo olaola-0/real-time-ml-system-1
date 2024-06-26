@@ -8,6 +8,7 @@ volumes:
   redpanda-0: null
 services:
   redpanda-0:
+    restart: always
     command:
       - redpanda
       - start
@@ -42,6 +43,7 @@ services:
       - 19092:19092
       - 19644:9644
   console:
+    restart: always
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:v2.6.0
     networks:
