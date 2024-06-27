@@ -74,7 +74,9 @@ def trade_to_ohlc(
             'low': value['price'],
             'close': value['price'],
             'product_id': value['product_id'],
-            'voume': value['volume'],
+            'volume': value['volume'],
+            'vwap_sum': value['price'] * value['volume'],
+            'vwap_volume': value['volume'],
         }
 
     # Define the reducer function to update the OHLC candle with new trade data
@@ -96,6 +98,9 @@ def trade_to_ohlc(
             'close': trade['price'],
             'product_id': trade['product_id'],
             'volume': ohlc_candle['volume'] + trade['volume'],
+            # For VWAP calculation
+            'vwap_sum': ohlc_candle['vwap_sum'] + trade['price'] * trade['volume'],
+            'vwap_volume': ohlc_candle['vwap_volume'] + trade['volume'],
         }
 
     # Apply transformations to the StreamingDataFrame to aggregate trades into OHLC candles -start
@@ -109,12 +114,14 @@ def trade_to_ohlc(
     sdf['close'] = sdf['value']['close']
     sdf['product_id'] = sdf['value']['product_id']
     sdf['volume'] = sdf['value']['volume']
+    # Calculate the volume weighted average price (VWAP)
+    sdf['vwap'] = sdf['value']['vwap_sum'] / sdf['value']['vwap_volume']
 
     # Add a timestamp column to the OHLC data
     sdf['timestamp'] = sdf['end']
 
     # keep only the necessary columns
-    sdf = sdf[['timestamp', 'open', 'high', 'low', 'close', 'product_id', 'volume']]
+    sdf = sdf[['timestamp', 'open', 'high', 'low', 'close', 'product_id', 'volume', 'vwap']]
 
     # Apply transformation to the StreamingDataFrame to aggregate trades into OHLC candles -end
 
