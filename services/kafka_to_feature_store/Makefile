@@ -37,6 +37,7 @@ run-historical: build
 		--env BUFFER_SIZE=150000 \
 		--env LIVE_OR_HISTORICAL=historical \
 		--env SAVE_EVERY_N_SEC=30 \
+		--env CREATE_NEW_CONSUMER_GROUP=true \
 		--env HOPSWORKS_PROJECT_NAME=${HOPSWORKS_PROJECT_NAME} \
 		--env HOPSWORKS_API_KEY=${HOPSWORKS_API_KEY} \
 		kafka-to-feature-store
