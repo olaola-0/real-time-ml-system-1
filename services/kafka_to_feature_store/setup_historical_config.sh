@@ -12,3 +12,5 @@ export BUFFER_SIZE=150000
 export LIVE_OR_HISTORICAL=historical
 
 export SAVE_EVERY_N_SEC=30
+
+export CREATE_NEW_COMSUMER_GROUP=true
