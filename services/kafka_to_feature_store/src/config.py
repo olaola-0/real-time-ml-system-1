@@ -19,6 +19,9 @@ class Config(BaseSettings):
 
     # force save to feature store every n seconds
     save_every_n_sec: int = 600
+    
+    # Whether to create a new consumer group or not
+    create_new_consumer_group: bool = False
 
     # required to authenticate with Hopsworks API
     hopsworks_project_name: str
