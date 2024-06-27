@@ -74,6 +74,7 @@ def trade_to_ohlc(
             'low': value['price'],
             'close': value['price'],
             'product_id': value['product_id'],
+            'voume': value['volume'],
         }
 
     # Define the reducer function to update the OHLC candle with new trade data
@@ -94,6 +95,7 @@ def trade_to_ohlc(
             'low': min(ohlc_candle['low'], trade['price']),
             'close': trade['price'],
             'product_id': trade['product_id'],
+            'volume': ohlc_candle['volume'] + trade['volume'],
         }
 
     # Apply transformations to the StreamingDataFrame to aggregate trades into OHLC candles -start
@@ -106,12 +108,13 @@ def trade_to_ohlc(
     sdf['low'] = sdf['value']['low']
     sdf['close'] = sdf['value']['close']
     sdf['product_id'] = sdf['value']['product_id']
+    sdf['volume'] = sdf['value']['volume']
 
     # Add a timestamp column to the OHLC data
     sdf['timestamp'] = sdf['end']
 
     # keep only the necessary columns
-    sdf = sdf[['timestamp', 'open', 'high', 'low', 'close', 'product_id']]
+    sdf = sdf[['timestamp', 'open', 'high', 'low', 'close', 'product_id', 'volume']]
 
     # Apply transformation to the StreamingDataFrame to aggregate trades into OHLC candles -end
 
