@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -28,6 +29,7 @@ def kafka_to_feature_store(
     buffer_size: Optional[int],
     live_or_historical: Optional[str] = 'live',
     save_every_n_sec: Optional[int] = 600,
+    create_new_consumer_group: Optional[bool] = False,
 ) -> None:
     """
     Reads OHLC data from the Kafka topic and writes it to HOPSWORKS Feature Store.
@@ -42,10 +44,19 @@ def kafka_to_feature_store(
         live_or_historical (Optional[str]): Whether to run the service in live or historical mode;
             Live mode writes data to the online feature store, while historical mode writes to the offline feature store.
         save_every_n_sec (Optional[int]): The number of seconds to wait before writing the buffered data to the feature store.
-
+        create_new_consumer_group (Optional[bool]): Whether to create a new consumer group or not.
     Returns:
         None
     """
+    
+    # Force the application to read from the beginning of the topic:
+    # Create a unique consumer group name. Which means that the when the service is restarted, 
+    # it will re-process all the messages in the 'kafka_topic' from the beginning.
+    if create_new_consumer_group:
+        # Generate a unique consumer group name using uuid
+        kafka_consumer_group = f'{kafka_consumer_group}_{uuid.uuid4()}'
+        logging.info(f'Created a new consumer group: {kafka_consumer_group}')
+
     # Initialize the application
     app = Application(
         broker_address=kafka_broker_address,
@@ -136,6 +147,7 @@ if __name__ == '__main__':
             buffer_size=config.buffer_size,
             live_or_historical=config.live_or_historical,
             save_every_n_sec=config.save_every_n_sec,
+            create_new_consumer_group=config.create_new_consumer_group,
         )
     except KeyboardInterrupt:
         logging.info('Shutting down Kafka to Feature Store service.')
