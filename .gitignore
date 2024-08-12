@@ -192,3 +192,7 @@ ca.cert
 *.pkl
 **/state
 **/setup_credentials.sh
+*.csv
+**/credentials.env
+.venv/
+certificates/
