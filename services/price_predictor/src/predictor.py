@@ -7,11 +7,11 @@ import pandas as pd
 from comet_ml.api import API
 from loguru import logger as logging
 from pydantic import BaseModel
-from tools.ohlc_data_reader import OHLCDataReader
 
 from src.data_preprocessing import interpolate_missing_candles
 from src.feature_engineering import add_features
 from src.utils import get_model_name
+from tools.ohlc_data_reader import OHLCDataReader
 
 
 class PredictorOutput(BaseModel):
@@ -134,8 +134,8 @@ class Predictor:
             experiment.get_parameters_summary('feature_view_version')['valueCurrent']
         )
         product_id = experiment.get_parameters_summary('product_id')['valueCurrent']
-        
-        last_n_minutes = 30 # int(experiment.get_parameters_summary('last_n_minutes')['valueCurrent'])
+
+        last_n_minutes = 30  # int(experiment.get_parameters_summary('last_n_minutes')['valueCurrent'])
 
         # Fetch the features to use. It is a list of strings and needs to parsed
         features_to_use = json.loads(
