@@ -32,7 +32,8 @@ def interpolate_missing_candles(
     ohlc_data['high'].fillna(ohlc_data['close'], inplace=True)
     ohlc_data['low'].fillna(ohlc_data['close'], inplace=True)
 
-    # If ohlc_data['volume'] is missing, fill it with 0
+    # If ohlc_data['volume'] is missing, fill it with 0 and 
+    # if ohlc_data['vwap'] is missing, fill it with the close price
     ohlc_data['volume'].fillna(0, inplace=True)
     ohlc_data['vwap'].fillna(ohlc_data['close'], inplace=True)
 
