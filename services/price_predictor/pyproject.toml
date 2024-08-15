@@ -11,12 +11,13 @@ ta-lib = "^0.4.31"
 comet-ml = "^3.43.2"
 pandas = "<2.2.0"
 tools = {path = "tools"}
-xgboost = "^2.1.0"
+xgboost = "2.0.0"
 loguru = "^0.7.2"
 flask = "^3.0.3"
 gunicorn = "^22.0.0"
 scikit-learn = "^1.5.1"
-matplotlib = "^3.9.1"
+optuna = "^3.6.1"
+matplotlib = "^3.9.2"
 
 
 [tool.poetry.group.dev.dependencies]
