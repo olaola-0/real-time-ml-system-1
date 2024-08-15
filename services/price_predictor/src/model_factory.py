@@ -1,10 +1,10 @@
 import warnings
 from typing import Optional
 
-import loguru as logging
 import numpy as np
 import optuna
 import pandas as pd
+from loguru import logger
 from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import TimeSeriesSplit
@@ -112,8 +112,8 @@ def fit_xgboost_regressor(
         study.optimize(objective, n_trials=hyper_param_search_trials)
 
         # Log the best hyperparameters and value found
-        logging.info(f'Best hyperparameters: {study.best_params}')
-        logging.info(f'Best value: {study.best_value}')
+        logger.info(f'Best hyperparameters: {study.best_params}')
+        logger.info(f'Best value: {study.best_value}')
 
         # Fit the model with the best hyperparameters found during the study
         model = XGBRegressor(**study.best_params)
@@ -149,7 +149,7 @@ def fit_lasso_regressor(
     # Check if hyperparameter tuning is requested
     if hyper_param_search_trials == 0:
         # Log the default hyperparameter value
-        logging.info(
+        logger.info(
             'Fitting Lasso regression model with default hyperparameter of alpha=0.1.'
         )
 
@@ -159,7 +159,7 @@ def fit_lasso_regressor(
 
     else:
         # Log the start of hyperparameter optimization
-        logging.info(
+        logger.info(
             f'Performing {hyper_param_search_trials} trials of hyperparameter optimization for Lasso regression model.'
         )
 
@@ -216,8 +216,8 @@ def fit_lasso_regressor(
         study.optimize(objective, n_trials=hyper_param_search_trials)
 
         # Log the best hyperparameters and value found
-        logging.info(f"Best alpha: {study.best_params['alpha']}")
-        logging.info(f'Best value: {study.best_value}')
+        logger.info(f"Best alpha: {study.best_params['alpha']}")
+        logger.info(f'Best value: {study.best_value}')
 
         # Fit the model with the best hyperparameters found during the study
         model = Pipeline(
