@@ -1,6 +1,6 @@
 import os
-import json
 import pickle
+from argparse import ArgumentParser
 from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -9,13 +9,13 @@ import pandas as pd
 from comet_ml import Experiment
 from loguru import logger as logging
 from sklearn.metrics import mean_absolute_error
-from tools.ohlc_data_reader import OHLCDataReader
 
 from src.baseline_model import BaselineModel
 from src.data_preprocessing import create_target_metric, interpolate_missing_candles
-from src.feature_engineering import add_features
-from src.model_factory import fit_lasso_regressor
+from src.feature_engineering import FeatureEngineering
+from src.model_factory import fit_xgboost_regressor
 from src.utils import get_model_name
+from tools.ohlc_data_reader import OHLCDataReader
 
 
 def train(
@@ -26,6 +26,7 @@ def train(
     last_n_days_to_fetch_from_store: int,
     last_n_days_to_test_model: int,
     prediction_window_sec: int,
+    hyper_param_search_trials: Optional[int] = 0,
 ) -> None:
     """
     Trains model by following these steps:
@@ -43,6 +44,7 @@ def train(
         last_n_days_to_fetch_from_store (int): Number of days to fetch data from the feature store
         last_n_days_to_test_model (int): Number of days to use for testing the model
         prediction_window_sec (int): Size of the prediction window in seconds
+        hyper_param_search_trials (int, optional): Number of hyperparameter search trials. Defaults to 0.
 
     Returns:
         None
@@ -65,6 +67,7 @@ def train(
             'last_n_days_to_fetch_from_store': last_n_days_to_fetch_from_store,
             'last_n_days_to_test_model': last_n_days_to_test_model,
             'prediction_window_sec': prediction_window_sec,
+            'hyper_param_search_trials': hyper_param_search_trials,
         }
     )
 
@@ -81,9 +84,6 @@ def train(
 
     # Add a human readable datetime column to the dataset using the timestamp in milliseconds column
     ohlc_data['datetime'] = pd.to_datetime(ohlc_data['timestamp'], unit='ms')
-
-    # Drop vwap column as it contains some NaN values and lasso regression does not handle NaN values
-    # ohlc_data.drop(columns=["vwap"], inplace=True)
 
     # Log a dataset hash to track the dataset
     experiment.log_dataset_hash(ohlc_data)
@@ -119,16 +119,12 @@ def train(
     )
     ohlc_test = create_target_metric(ohlc_test, ohlc_window_sec, prediction_window_sec)
 
-    # Create a histogram of the contnuous variable ohlc_train["target"] and save it to an object
-    plt.figure(figsize=(10, 6))
-    plt.hist(ohlc_train['target'], bins=30, alpha=0.75, color='blue', edgecolor='black')
-    plt.title('Histogram of Price Change')
-    plt.xlabel('Price Change')
-    plt.ylabel('Frequency')
-    plt.grid(True)
+    # Log a plot of the target metric distribution
+    output_dir = './target_metric_histogram.png'
+    plot_target_metric_histogram(ohlc_train['target'], output_dir, n_bins=100)
 
-    # Push the object as a figure to Comet_ML
-    experiment.log_figure(figure=plt)
+    # Log the target metric histogram plot to Comet_ML
+    experiment.log_image(output_dir, name='target_metric_histogram')
 
     # Split the features and target
     X_train = ohlc_train.drop(columns=['target'])
@@ -177,86 +173,96 @@ def train(
 
     # Step 6: Build a more sophisticated model
     # Add more features to the dataset
-    X_train = add_features(
-        X=X_train, n_candles_into_future=prediction_window_sec // ohlc_window_sec
+    feature_eng_pipeline = FeatureEngineering(
+        n_candles_into_future=prediction_window_sec // ohlc_window_sec
     )
-    X_test = add_features(
-        X=X_test, n_candles_into_future=prediction_window_sec // ohlc_window_sec
-    )
+    X_train = feature_eng_pipeline.fit_transform(X_train)
+    X_test = feature_eng_pipeline.transform(X_test)
 
-    features_to_use = [
-        'obv',
-        'rsi',
-        'momentum',
-        'std',
-        'macd',
-        'macd_signal',
-        'last_observed_target',
-        'day_of_week',
-        'hour_of_day',
-        'minute_of_hour',
-    ]
+    # Keep only observations for which we have all the features for the training and testing sets
+    nan_mask_train = X_train.isna().any(axis=1)
+    X_train = X_train[~nan_mask_train]
+    y_train = y_train[~nan_mask_train]
 
-    X_train = X_train[features_to_use]
-    X_test = X_test[features_to_use]
-    print(X_train.head(10))
-    print(X_test.head(10))
-    # Log the shapes of X_train, y_train, X_test, y_test
+    nan_mask_test = X_test.isna().any(axis=1)
+    X_test = X_test[~nan_mask_test]
+    y_test = y_test[~nan_mask_test]
+
+    # log the shapes of X_train, y_train, X_test, y_test
     experiment.log_metric('X_train_shape', X_train.shape)
     experiment.log_metric('y_train_shape', y_train.shape)
     experiment.log_metric('X_test_shape', X_test.shape)
     experiment.log_metric('y_test_shape', y_test.shape)
 
-    # Log the list of features used in the model
-    # Convert the list to a string or JSON before logging
-    experiment.log_parameters({'features_to_use': json.dumps(features_to_use)})
+    # Log the list of features
+    experiment.log_parameter('features_to_use', X_train.columns.tolist())
 
-    # XGBRegressor is overfitting the data. There are no strong patterns/correlations
-    # between the features and the target. So XGBoost ends up fitting noise, not signal.
-    # # Train an XGBoost model
-    # model = fit_xgboost_regressor(X_train, y_train, tune_hyper_params=False)
-    # evaluate_model(
-    #    predictions=model.predict(X_test),
-    #    actuals=y_test,
-    #    description='XGBoost regression model on Test data',
+    # # Train a lasso regression model
+    # model = fit_lasso_regressor(X_train, y_train, hyper_param_search_trials=hyper_param_search_trials)
+    # test_mae = evaluate_model(
+    #     predictions=model.predict(X_test),
+    #     actuals=y_test,
+    #     description='Lasso Regression model on Test data',
     # )
-    # evaluate_model(
-    #    predictions=model.predict(X_train),
-    #    actuals=y_train,
-    #    description='XGBoost regression model on Training data',
+    # train_mae = evaluate_model(
+    #     predictions=model.predict(X_train),
+    #     actuals=y_train,
+    #     description='Lasso Regression model on Training data',
     # )
 
-    # Train a lasso regression model
-    model = fit_lasso_regressor(X_train, y_train, tuner_hyper_params=False)
+    # # Log the MAE of the Lasso Regression model on the training and testing sets
+    # experiment.log_metric('lasso_model_test_mae', test_mae)
+    # experiment.log_metric('lasso_model_train_mae', train_mae)
+
+    # # Save the model as a pickle file
+    # with open('lasso_model.pkl', 'wb') as f:
+    #     logging.info('Saving the model as a pickle file')
+    #     pickle.dump(model, f)
+
+    # model_name = get_model_name(product_id=product_id)
+    # experiment.log_model(name=model_name, file_or_folder='./lasso_model.pkl')
+
+    # Train an XGBoost model
+    model = fit_xgboost_regressor(
+        X_train, y_train, hyper_param_search_trials=hyper_param_search_trials
+    )
     test_mae = evaluate_model(
         predictions=model.predict(X_test),
         actuals=y_test,
-        description='Lasso Regression model on Test data',
+        description='XGBoost model on Test data',
     )
     train_mae = evaluate_model(
         predictions=model.predict(X_train),
         actuals=y_train,
-        description='Lasso Regression model on Training data',
+        description='XGBoost model on Training data',
     )
 
-    # Log the MAE of the Lasso Regression model on the training and testing sets
-    experiment.log_metric('lasso_model_test_mae', test_mae)
-    experiment.log_metric('lasso_model_train_mae', train_mae)
-
-    # Save the model as a pickle file
-    with open('lasso_model.pkl', 'wb') as f:
+    with open('./xgboost_model.pkl', 'wb') as f:
         logging.info('Saving the model as a pickle file')
         pickle.dump(model, f)
 
+    # Log the MAE of the XGBoost model on the training and testing sets
+    experiment.log_metric('xgboost_model_test_mae', test_mae)
+    experiment.log_metric('xgboost_model_train_mae', train_mae)
+
     model_name = get_model_name(product_id=product_id)
-    experiment.log_model(name=model_name, file_or_folder='./lasso_model.pkl')
+    experiment.log_model(name=model_name, file_or_folder='./xgboost_model.pkl')
 
     # Last step in the training pipeline: Push the model to the model registry
-    # If test_mae < baseline_test_mae:
-    if True:
+    if test_mae < baseline_test_mae:
         # Push the model to the model registry
         experiment.register_model(model_name=model_name)
-        logging.info(f'Model {model_name} has been pushed to the model registry')
+        logging.info(
+            '***** The XGBoost model performs better than the baseline model *****'
+        )
+        logging.info('***** Pushing the XGBoost model to the model registry *****')
+        experiment.register_model(model_name=model_name)
+
+    else:
+        logging.info(
+            '***** The baseline model performs better than the XGBoost model *****'
+        )
+        logging.info('***** Not pushing the XGBoost model to the model registry *****')
 
 
 def split_train_test(
@@ -285,6 +291,27 @@ def split_train_test(
     return ohlc_train, ohlc_test
 
 
+def plot_target_metric_histogram(target: pd.Series, output_dir: str, n_bins: int = 30):
+    """
+    Plots the histogram of the target metric
+
+    Args:
+        target (pd.Series): Target metric
+        output_dir (str): Output directory for the plot
+        n_bins (int, optional): Number of bins in the histogram. Defaults to 30.
+    """
+    # Create a histogram of the contnuous variable ohlc_train["target"] and save it to an object
+    plt.figure(figsize=(10, 6))
+    plt.hist(target, bins=30, alpha=0.75, color='blue', edgecolor='black')
+    plt.title('Histogram of Price Change')
+    plt.xlabel('Price Change')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+
+    # Save the plot to a file
+    plt.savefig(output_dir, format='png')
+
+
 def evaluate_model(
     predictions: pd.Series,
     actuals: pd.Series,
@@ -309,12 +336,23 @@ def evaluate_model(
 
 
 if __name__ == '__main__':
+    # Add a CLI (Command Line Interface) argument called hyper_param_search_trials using argparse
+    parser = ArgumentParser()
+    parser.add_argument(
+        '--hyper_param_search_trials',
+        type=int,
+        default=0,
+        help='Number of hyperparameter search trials',
+    )
+    args = parser.parse_args()
+
     train(
         feature_view_name='ohlc_feature_view',
         feature_view_version=1,
         ohlc_window_sec=60,
         product_id='BTC/USD',
-        last_n_days_to_fetch_from_store=90,
+        last_n_days_to_fetch_from_store=120,
         last_n_days_to_test_model=7,
         prediction_window_sec=60 * 5,
+        hyper_param_search_trials=args.hyper_param_search_trials,
     )
