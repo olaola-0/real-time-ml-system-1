@@ -476,12 +476,12 @@ def add_temporal_features(X: pd.DataFrame) -> pd.DataFrame:
     X_ = X.copy()
 
     # Ensure the 'timestamp' column is a datetime object
-    X_['timestamp'] = pd.to_datetime(X_['timestamp'])
+    #X_['timestamp'] = pd.to_datetime(X_['timestamp'])
 
     # Extract temporal features
-    X_['day_of_week'] = X_['timestamp'].dt.dayofweek
-    X_['hour_of_day'] = X_['timestamp'].dt.hour
-    X_['minute_of_hour'] = X_['timestamp'].dt.minute
+    X_['day_of_week'] = pd.to_datetime(X_['timestamp']).dt.dayofweek
+    X_['hour_of_day'] = pd.to_datetime(X_['timestamp']).dt.hour
+    X_['minute_of_hour'] =pd.to_datetime(X_['timestamp']).dt.minute
 
     return X_
 
