@@ -30,7 +30,7 @@ copy-tools:
 	cp -r ../../tools .
 
 build: copy-tools
-	docker build -t price_predictor-api .
+	docker build --no-cache -t price_predictor-api .
 
 run: build
 	docker run \
