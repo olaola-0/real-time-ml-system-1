@@ -16,6 +16,11 @@ variables:
     description: The model registry and experiment tracker API key
     defaultValue: COMET_ML_API_KEY
     required: true
+  - name: COMET_ML_PROJECT_NAME
+    inputType: Secret
+    description: The experiment tracker and model registry project name
+    defaultValue: COMET_ML_PROJECT_NAME
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: src/main.py
 defaultFile: src/main.py
