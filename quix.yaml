@@ -24,7 +24,7 @@ deployments:
         inputType: FreeText
         description: List of product ids to fetch from Kraken API
         required: true
-        value: "'[\"BTC/USD\", \"ETH/EUR\", \"ETH/USD\"]'"
+        value: '["BTC/USD", "ETH/EUR", "ETH/USD"]'
       - name: LIVE_OR_HISTORICAL
         inputType: FreeText
         description: Where to connect to Kraken Websocket for live data or REST API for historical data
