@@ -9,7 +9,7 @@ variables:
   - name: PRODUCT_IDS
     inputType: FreeText
     description: List of product ids to fetch from Kraken API
-    defaultValue: "'[\"BTC/USD\", \"ETH/EUR\", \"ETH/USD\"]'"
+    defaultValue: '["BTC/USD", "ETH/EUR", "ETH/USD"]'
     required: true
   - name: LIVE_OR_HISTORICAL
     inputType: FreeText
