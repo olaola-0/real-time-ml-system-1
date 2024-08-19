@@ -11,6 +11,11 @@ variables:
     description: ' Creating data from the ohlc topic'
     defaultValue: ohlc_consumer_group_99
     required: true
+  - name: FEATURE_GROUP_NAME
+    inputType: FreeText
+    description: The feature store feature group name
+    defaultValue: ohlc_feature_group
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: sc/main.py
 defaultFile: src/main.py
