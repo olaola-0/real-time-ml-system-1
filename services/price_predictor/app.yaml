@@ -1,4 +1,4 @@
-name: kafka_to_feature_store
+name: price_predictor
 language: python
 variables: []
 dockerfile: Dockerfile
