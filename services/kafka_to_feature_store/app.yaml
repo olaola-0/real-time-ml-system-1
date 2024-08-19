@@ -42,5 +42,5 @@ variables:
     defaultValue: HOPSWORKS_API_KEY
     required: true
 dockerfile: Dockerfile
-runEntryPoint: sc/main.py
+runEntryPoint: src/main.py
 defaultFile: src/main.py
