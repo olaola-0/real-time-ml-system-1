@@ -5,7 +5,31 @@ metadata:
   version: 1.0
 
 # This section describes the Deployments of the data pipeline
-deployments: []
+deployments:
+  - name: trade_producer
+    application: services/trade_producer
+    version: latest
+    deploymentType: Service
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    variables:
+      - name: KAFKA_TOPIC
+        inputType: OutputTopic
+        description: The kafka topic where the trade data is saved
+        required: true
+        value: trade
+      - name: PRODUCT_IDS
+        inputType: FreeText
+        description: List of product ids to fetch from Kraken API
+        required: true
+        value: "'[\"BTC/USD\", \"ETH/EUR\", \"ETH/USD\"]'"
+      - name: LIVE_OR_HISTORICAL
+        inputType: FreeText
+        description: Where to connect to Kraken Websocket for live data or REST API for historical data
+        required: true
+        value: live
 
 # This section describes the Topics of the data pipeline
 topics:
