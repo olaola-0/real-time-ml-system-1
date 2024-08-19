@@ -31,6 +31,11 @@ variables:
     description: ''
     defaultValue: live
     required: true
+  - name: HOPSWORKS_PROJECT_NAME
+    inputType: Secret
+    description: The feature store project name
+    defaultValue: HOPSWORKS_PROJECT_NAME
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: sc/main.py
 defaultFile: src/main.py
