@@ -30,6 +30,35 @@ deployments:
         description: Where to connect to Kraken Websocket for live data or REST API for historical data
         required: true
         value: live
+  - name: trade_to_ohlc
+    application: services/trade_to_ohlc
+    version: latest
+    deploymentType: Service
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    variables:
+      - name: KAFKA_INPUT_TOPIC
+        inputType: InputTopic
+        description: The Kafka topic to ingest data from
+        required: true
+        value: trade
+      - name: KAFKA_OUTPUT_TOPIC
+        inputType: OutputTopic
+        description: The Kafka where the ohlc data is pushed to
+        required: true
+        value: ohlc
+      - name: KAFKA_CONSUMER_GROUP
+        inputType: FreeText
+        description: The consumer group used to read data from the trade topic
+        required: true
+        value: trade_to_ohlc_consumer_group
+      - name: OHLC_WINDOW_SECONDS
+        inputType: FreeText
+        description: Number of seconds of the OHLC candles
+        required: true
+        value: 60
 
 # This section describes the Topics of the data pipeline
 topics:
