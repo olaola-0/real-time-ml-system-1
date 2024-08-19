@@ -6,6 +6,11 @@ variables:
     description: The kafka topic where the trade data is saved
     defaultValue: trade
     required: true
+  - name: PRODUCT_IDS
+    inputType: FreeText
+    description: List of product ids to fetch from Kraken API
+    defaultValue: "'[\"BTC/USD\", \"ETH/EUR\", \"ETH/USD\"]'"
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: src/main.py
 defaultFile: src/main.py
