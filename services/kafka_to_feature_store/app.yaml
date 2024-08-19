@@ -36,6 +36,11 @@ variables:
     description: The feature store project name
     defaultValue: HOPSWORKS_PROJECT_NAME
     required: true
+  - name: HOPSWORKS_API_KEY
+    inputType: Secret
+    description: The feature store API key
+    defaultValue: HOPSWORKS_API_KEY
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: sc/main.py
 defaultFile: src/main.py
