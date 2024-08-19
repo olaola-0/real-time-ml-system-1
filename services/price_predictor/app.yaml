@@ -27,5 +27,5 @@ variables:
     defaultValue: COMET_ML_WORKSPACE
     required: true
 dockerfile: Dockerfile
-runEntryPoint: src/main.py
-defaultFile: src/main.py
+runEntryPoint: src/api.py
+defaultFile: src/api.py
