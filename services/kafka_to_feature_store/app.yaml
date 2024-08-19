@@ -21,6 +21,11 @@ variables:
     description: The feature group version
     defaultValue: 1
     required: true
+  - name: BUFFER_SIZE
+    inputType: FreeText
+    description: Number of messages to push at once
+    defaultValue: 1
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: sc/main.py
 defaultFile: src/main.py
