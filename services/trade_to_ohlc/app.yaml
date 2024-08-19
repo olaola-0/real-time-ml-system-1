@@ -6,6 +6,11 @@ variables:
     description: The Kafka topic to ingest data from
     defaultValue: trade
     required: true
+  - name: KAFKA_OUTPUT_TOPIC
+    inputType: OutputTopic
+    description: The Kafka where the ohlc data is pushed to
+    defaultValue: ohlc
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: src/main.py
 defaultFile: src/main.py
