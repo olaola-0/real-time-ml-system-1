@@ -21,6 +21,11 @@ variables:
     description: The experiment tracker and model registry project name
     defaultValue: COMET_ML_PROJECT_NAME
     required: true
+  - name: COMET_ML_WORKSPACE
+    inputType: Secret
+    description: The experiment tracker and model registry workspace name
+    defaultValue: COMET_ML_WORKSPACE
+    required: true
 dockerfile: Dockerfile
 runEntryPoint: src/main.py
 defaultFile: src/main.py
