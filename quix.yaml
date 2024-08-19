@@ -59,6 +59,55 @@ deployments:
         description: Number of seconds of the OHLC candles
         required: true
         value: 60
+  - name: kafka_to_feature_store
+    application: services/kafka_to_feature_store
+    version: latest
+    deploymentType: Service
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    variables:
+      - name: KAFKA_TOPIC
+        inputType: InputTopic
+        description: The Kafka topic to ingest OHLC data from
+        required: true
+        value: ohlc
+      - name: KAFKA_CONSUMER_GROUP
+        inputType: FreeText
+        description: ' Creating data from the ohlc topic'
+        required: true
+        value: ohlc_consumer_group_99
+      - name: FEATURE_GROUP_NAME
+        inputType: FreeText
+        description: The feature store feature group name
+        required: true
+        value: ohlc_feature_group
+      - name: FEATURE_GROUP_VERSION
+        inputType: FreeText
+        description: The feature group version
+        required: true
+        value: 1
+      - name: BUFFER_SIZE
+        inputType: FreeText
+        description: Number of messages to push at once
+        required: true
+        value: 1
+      - name: LIVE_OR_HISTORICAL
+        inputType: FreeText
+        description: ''
+        required: true
+        value: live
+      - name: HOPSWORKS_PROJECT_NAME
+        inputType: Secret
+        description: The feature store project name
+        required: true
+        secretKey: HOPSWORKS_PROJECT_NAME
+      - name: HOPSWORKS_API_KEY
+        inputType: Secret
+        description: The feature store API key
+        required: true
+        secretKey: HOPSWORKS_API_KEY
 
 # This section describes the Topics of the data pipeline
 topics:
