@@ -39,7 +39,9 @@ run: build
 		price_predictor-api
 
 request-production:
-	
+	curl -X POST https://btc-predictor-test-isholamyson-realtimemlsystem1-production.deployments.quix.io/predict \
+	-H "Content-Type: application/json" \
+	-d '{"product_id":"BTC/USD"}'
 
 lint:
 	poetry run ruff check --fix
