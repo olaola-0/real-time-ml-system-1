@@ -113,7 +113,7 @@ deployments:
     version: latest
     deploymentType: Service
     resources:
-      cpu: 200
+      cpu: 300
       memory: 700
       replicas: 1
     publicAccess:
