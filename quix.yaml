@@ -108,6 +108,43 @@ deployments:
         description: The feature store API key
         required: true
         secretKey: HOPSWORKS_API_KEY
+  - name: price_predictor
+    application: services/price_predictor
+    version: latest
+    deploymentType: Service
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    publicAccess:
+      enabled: true
+      urlPrefix: predictor
+    variables:
+      - name: HOPSWORKS_API_KEY
+        inputType: Secret
+        description: The feature store API key
+        required: true
+        secretKey: HOPSWORKS_API_KEY
+      - name: HOPSWORKS_PROJECT_NAME
+        inputType: Secret
+        description: The feature store project name
+        required: true
+        secretKey: HOPSWORKS_PROJECT_NAME
+      - name: COMET_ML_API_KEY
+        inputType: Secret
+        description: The model registry and experiment tracker API key
+        required: true
+        secretKey: COMET_ML_API_KEY
+      - name: COMET_ML_PROJECT_NAME
+        inputType: Secret
+        description: The experiment tracker and model registry project name
+        required: true
+        secretKey: COMET_ML_PROJECT_NAME
+      - name: COMET_ML_WORKSPACE
+        inputType: Secret
+        description: The experiment tracker and model registry workspace name
+        required: true
+        secretKey: COMET_ML_WORKSPACE
 
 # This section describes the Topics of the data pipeline
 topics:
